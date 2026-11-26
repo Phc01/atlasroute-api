@@ -21,3 +21,6 @@ Thumbs.db
 
 ### Segredos locais
 .env
+
+### Graphify (grafo gerado localmente)
+graphify-out/
