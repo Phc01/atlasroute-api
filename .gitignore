@@ -1,0 +1,23 @@
+target/
+!.mvn/wrapper/maven-wrapper.jar
+
+### IntelliJ
+.idea/
+*.iml
+*.iws
+*.ipr
+
+### VS Code
+.vscode/
+
+### Eclipse
+.classpath
+.project
+.settings/
+
+### SO
+.DS_Store
+Thumbs.db
+
+### Segredos locais
+.env
