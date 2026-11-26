@@ -11,9 +11,10 @@ Sistema de logística em Java/Spring Boot com otimização de rotas e distribui�
 
 ## Como rodar
 
-Pré-requisitos: JDK 21, Maven e Docker.
+Pré-requisitos: JDK 21 e Docker Desktop (aberto). Não precisa instalar o Maven: o `mvnw.cmd`
+baixa o Maven 3.9.11 em `%USERPROFILE%\.m2\wrapper` na primeira execução.
 
-```bash
+```powershell
 # 1. sobe o banco
 docker compose up -d
 
@@ -27,6 +28,12 @@ docker compose up -d
 
 ## Testes
 
-```bash
+```powershell
 .\mvnw.cmd test
 ```
+
+Os testes de integração usam Testcontainers e precisam do Docker Desktop rodando.
+
+> **Nota sobre o Testcontainers:** a versão está fixada em `1.21.4` no `pom.xml`
+> (`testcontainers.version`). A `1.21.3`, que vem com o Spring Boot 3.5.6, não funciona com o
+> Docker Engine 29, que exige a API 1.44 ou mais nova. Não remova essa propriedade.
