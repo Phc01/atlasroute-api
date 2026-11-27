@@ -21,7 +21,7 @@ class AtlasRouteApplicationTests {
     static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:17-alpine");
 
     @Test
-    void contextoCarregaEMigrationsRodam() {
+    void shouldLoadContextAndRunMigrations() {
         // Se o Flyway ou a conexão com o banco falharem, o contexto não sobe e o teste quebra.
     }
 }
