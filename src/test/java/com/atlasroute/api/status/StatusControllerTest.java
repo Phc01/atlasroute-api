@@ -24,15 +24,15 @@ class StatusControllerTest {
     private Clock clock;
 
     @Test
-    void deveRetornarStatusUp() throws Exception {
+    void shouldReturnStatusUp() throws Exception {
         // Arrange
         when(clock.instant()).thenReturn(Instant.parse("2026-11-26T12:00:00Z"));
 
         // Act
-        var resultado = mockMvc.perform(get("/api/v1/status"));
+        var result = mockMvc.perform(get("/api/v1/status"));
 
         // Assert
-        resultado.andExpect(status().isOk())
+        result.andExpect(status().isOk())
                 .andExpect(jsonPath("$.app").value("atlasroute-api"))
                 .andExpect(jsonPath("$.status").value("UP"))
                 .andExpect(jsonPath("$.timestamp").value("2026-11-26T12:00:00Z"));

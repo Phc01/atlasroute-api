@@ -30,13 +30,17 @@ Repositório: https://github.com/Phc01/atlasroute-api
 
 ## Convenções de código
 
-- Pacote base `com.atlasroute.api`, organizado por domínio (ex.: `status/`, `auth/`, `veiculo/`)
+- Pacote base `com.atlasroute.api`, organizado por domínio (ex.: `status/`, `auth/`, `vehicle/`)
 - DTOs como `record`; controllers finos, regra no service
 - Rotas versionadas: `/api/v1/...`
 - Data/hora via bean `Clock` (testável); nunca `Instant.now()` sem clock
-- Testes no padrão AAA com comentários `// Arrange`, `// Act`, `// Assert`; nomes em português
-  (`deveRetornarStatusUp`)
-- Mensagens, nomes de domínio e docs em português
+- Todo nome no código fica em inglês: pacotes, classes, métodos, variáveis, entidades,
+  tabelas/colunas, campos do JSON e nomes de teste (ex.: `error/ResourceNotFoundException`,
+  campo `errors`, `shouldReturnStatusUp`)
+- Tabelas no plural em snake_case (`users`, `orders`, `packing_list_stops`); `user` e `order` são
+  palavras reservadas no PostgreSQL
+- Testes no padrão AAA com comentários `// Arrange`, `// Act`, `// Assert`
+- Mensagens para o usuário, Javadoc, comentários e docs em português
 
 ## Fluxo de versionamento (o Pedro quer treinar isso — seguir sempre)
 
@@ -61,15 +65,15 @@ Repositório: https://github.com/Phc01/atlasroute-api
 
 ## Modelo de dados planejado
 
-| Entidade | Campos principais |
-|---|---|
-| Usuário | nome, e-mail, senha (hash), perfil (ADMIN / MOTORISTA) |
-| Veículo | placa, capacidade de peso (kg), capacidade de volume (m³) |
-| Motorista | nome, CNH, usuário vinculado |
-| Cliente | nome, endereço, latitude, longitude |
-| Pedido | cliente, peso, volume, status |
-| Romaneio | veículo, motorista, data, status, distância total |
-| Parada do romaneio | romaneio, pedido, ordem, distância até a próxima |
+| Entidade (tabela) | Conceito | Campos principais |
+|---|---|---|
+| `User` (`users`) | Usuário | name, email, password (hash), role (`ADMIN` / `DRIVER`) |
+| `Vehicle` (`vehicles`) | Veículo | plate, weightCapacityKg, volumeCapacityM3 |
+| `Driver` (`drivers`) | Motorista | name, licenseNumber (CNH), user |
+| `Customer` (`customers`) | Cliente | name, address, latitude, longitude |
+| `Order` (`orders`) | Pedido | customer, weightKg, volumeM3, status |
+| `PackingList` (`packing_lists`) | Romaneio | vehicle, driver, date, status, totalDistanceKm |
+| `PackingListStop` (`packing_list_stops`) | Parada do romaneio | packingList, order, sequence, distanceToNextKm |
 
 ## Tarefas da etapa 2 (uma branch cada)
 
@@ -77,13 +81,16 @@ Repositório: https://github.com/Phc01/atlasroute-api
 |---|---|---|
 | 0 | `chore/readme-mvnw` | README com `.\mvnw.cmd` + nota do Testcontainers; `graphify-out/` no `.gitignore`; este CLAUDE.md |
 | 1 | `feature/tratamento-erros` | `@RestControllerAdvice` com `ProblemDetail` (validação, 404, genérico) |
-| 2 | `feature/usuario-entidade` | Migration `V2` tabela `usuario`, entidade, enum `Perfil`, repository |
-| 3 | `feature/auth-cadastro` | `POST /api/v1/auth/register`, BCrypt, validações, testes |
+| 2 | `feature/user-entity` | Migration `V2` tabela `users`, entidade `User`, enum `Role`, repository |
+| 3 | `feature/auth-register` | `POST /api/v1/auth/register`, BCrypt, validações, testes |
 | 4 | `feature/auth-jwt-login` | Geração/validação de JWT + `POST /api/v1/auth/login` |
 | 5 | `feature/security-config` | Rotas públicas (auth, Swagger, health), resto protegido, perfis, 401/403 em JSON, "Authorize" no Swagger |
-| 6 | `test/auth-integracao` | Fluxo completo com Testcontainers: cadastrar → logar → rota protegida |
+| 6 | `test/auth-integration` | Fluxo completo com Testcontainers: cadastrar → logar → rota protegida |
 
 ## Estado atual
 
-- Etapa 1 concluída e na `main`; aplicação sobe e os 2 testes passam.
-- Tarefa 0 (issue #1) em andamento; próximo passo: tarefa 1 (`feature/tratamento-erros`).
+- Etapa 1 concluída e na `main`.
+- Tarefa 0 (issue #1, PR #2) concluída.
+- Tarefa 1 (`feature/tratamento-erros`) em andamento: `error/GlobalExceptionHandler` +
+  `ResourceNotFoundException`; 7 testes passando. Próximo passo: tarefa 2 (`feature/user-entity`).
+- Para 404 de recurso, os services lançam `ResourceNotFoundException("Veículo", id)`.
