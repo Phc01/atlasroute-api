@@ -103,6 +103,9 @@ Repositório: https://github.com/Phc01/atlasroute-api
 
 - Tarefa 3: `existsByEmail` + `save` tem corrida; tratar a violação de `uk_users_email`
   (`DataIntegrityViolationException`) como 409 "E-mail já cadastrado", não 500.
+- Tarefa 3: o `trim()` do JPQL no PostgreSQL só tira espaços, e `User.normalizeEmail` tira também
+  tab/quebra de linha. Validar o e-mail com `@Email` no DTO e chamar `User.normalizeEmail` no
+  service antes do repository; `findByEmail(null)` devolve vazio (não lança exceção).
 - Tarefa 5: o `@ExceptionHandler(Exception.class)` do `GlobalExceptionHandler` captura
   `AccessDeniedException`/`AuthenticationException` de `@PreAuthorize` e devolveria 500;
   tratar essas exceções (403/401) antes do catch-all.
