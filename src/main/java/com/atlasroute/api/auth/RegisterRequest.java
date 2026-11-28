@@ -1,5 +1,6 @@
 package com.atlasroute.api.auth;
 
+import com.atlasroute.api.validation.MaxUtf8Bytes;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
@@ -9,7 +10,7 @@ import jakarta.validation.constraints.Size;
  *
  * <p>O construtor compacto tira os espaços das pontas do nome e do e-mail antes da validação,
  * então " pedro@x.com " passa no {@code @Email}. A senha não é alterada.
- * O limite de 72 da senha é o máximo que o BCrypt considera (o resto seria ignorado).
+ * O limite da senha é de 72 <b>bytes</b> (não caracteres), o máximo que o BCrypt aceita.
  */
 public record RegisterRequest(
         @NotBlank(message = "é obrigatório")
@@ -22,7 +23,8 @@ public record RegisterRequest(
         String email,
 
         @NotBlank(message = "é obrigatória")
-        @Size(min = 8, max = 72, message = "deve ter entre 8 e 72 caracteres")
+        @Size(min = 8, message = "deve ter no mínimo 8 caracteres")
+        @MaxUtf8Bytes(value = 72, message = "deve ter no máximo 72 bytes (letras com acento e emojis contam mais de 1)")
         String password
 ) {
 

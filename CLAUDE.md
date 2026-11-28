@@ -97,7 +97,7 @@ Repositório: https://github.com/Phc01/atlasroute-api
 - Tarefa 3 (issue #6, `feature/auth-register`) em andamento: `POST /api/v1/auth/register`
   (`auth/AuthController`, `RegistrationService`, `RegisterRequest`, `UserResponse`), BCrypt via
   `spring-security-crypto` (`config/PasswordConfig`; o starter de security só entra na tarefa 5),
-  `error/ConflictException` → 409. 22 testes passando. Próximo passo: tarefa 4 (`feature/auth-jwt-login`).
+  `error/ConflictException` → 409, senha limitada a 72 bytes (`validation/MaxUtf8Bytes`). 26 testes passando. Próximo passo: tarefa 4 (`feature/auth-jwt-login`).
 - `@WebMvcTest` sempre com `controllers = ...`: sem filtro o slice carrega todos os controllers.
 - `UserRepository.findByEmail`/`existsByEmail` normalizam o e-mail na consulta (`lower(trim())`),
   então o service passa o e-mail como foi digitado; o banco rejeita e-mail não normalizado
@@ -111,6 +111,8 @@ Repositório: https://github.com/Phc01/atlasroute-api
 - Tarefa 5: o `@ExceptionHandler(Exception.class)` do `GlobalExceptionHandler` captura
   `AccessDeniedException`/`AuthenticationException` de `@PreAuthorize` e devolveria 500;
   tratar essas exceções (403/401) antes do catch-all.
+- Tarefa 5: com o starter de security, os `@WebMvcTest` de POST passam a receber 403 por CSRF;
+  desligar CSRF na API stateless e deixar `/api/v1/auth/**` pública.
 - Para 404 de recurso, os services lançam `ResourceNotFoundException("Veículo", id)`.
 
 ## Orquestração de agentes com o Orca ("bots")

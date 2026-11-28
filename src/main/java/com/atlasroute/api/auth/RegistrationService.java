@@ -4,10 +4,10 @@ import com.atlasroute.api.error.ConflictException;
 import com.atlasroute.api.user.Role;
 import com.atlasroute.api.user.User;
 import com.atlasroute.api.user.UserRepository;
+import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Clock;
 import java.time.Instant;
@@ -15,12 +15,19 @@ import java.time.Instant;
 /**
  * Cadastro de usuários. Todo cadastro público nasce com o perfil {@link Role#DRIVER};
  * promover alguém a ADMIN fica para um fluxo administrativo.
+ *
+ * <p>Sem {@code @Transactional} de propósito: o hash do BCrypt é lento (~100 ms) e não deve
+ * segurar uma conexão do banco. {@code existsByEmail} e {@code saveAndFlush} já rodam cada um
+ * na sua transação, e o UNIQUE do banco garante a consistência.
+ *
+ * <p>Decisão consciente: o 409 revela que o e-mail já tem cadastro (troca comum em cadastro
+ * público). Limite de requisições entra junto com a segurança (tarefa 5).
  */
 @Service
 public class RegistrationService {
 
     static final String EMAIL_ALREADY_REGISTERED = "E-mail já cadastrado.";
-    private static final String EMAIL_UNIQUE_CONSTRAINT = "uk_users_email";
+    static final String EMAIL_UNIQUE_CONSTRAINT = "uk_users_email";
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
@@ -32,7 +39,6 @@ public class RegistrationService {
         this.clock = clock;
     }
 
-    @Transactional
     public UserResponse register(RegisterRequest request) {
         String email = User.normalizeEmail(request.email());
 
@@ -55,8 +61,13 @@ public class RegistrationService {
         }
     }
 
+    /** Usa o nome da constraint que o Hibernate extrai do erro, sem depender do texto da mensagem. */
     private static boolean isEmailUniqueViolation(DataIntegrityViolationException ex) {
-        String message = ex.getMostSpecificCause().getMessage();
-        return message != null && message.contains(EMAIL_UNIQUE_CONSTRAINT);
+        for (Throwable cause = ex; cause != null; cause = cause.getCause()) {
+            if (cause instanceof ConstraintViolationException violation) {
+                return EMAIL_UNIQUE_CONSTRAINT.equalsIgnoreCase(violation.getConstraintName());
+            }
+        }
+        return false;
     }
 }

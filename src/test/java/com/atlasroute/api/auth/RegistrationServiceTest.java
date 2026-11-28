@@ -10,6 +10,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
@@ -86,7 +87,7 @@ class RegistrationServiceTest {
         var request = new RegisterRequest("Pedro", "pedro@atlasroute.com", "senha-forte-123");
         when(userRepository.existsByEmail("pedro@atlasroute.com")).thenReturn(false);
         when(passwordEncoder.encode(any())).thenReturn("hash");
-        var cause = new SQLException("ERROR: duplicate key value violates unique constraint \"uk_users_email\"");
+        var cause = new ConstraintViolationException("duplicate key", new SQLException("duplicate key"), "uk_users_email");
         when(userRepository.saveAndFlush(any(User.class)))
                 .thenThrow(new DataIntegrityViolationException("could not execute statement", cause));
 
@@ -102,7 +103,7 @@ class RegistrationServiceTest {
         var request = new RegisterRequest("Pedro", "pedro@atlasroute.com", "senha-forte-123");
         when(userRepository.existsByEmail("pedro@atlasroute.com")).thenReturn(false);
         when(passwordEncoder.encode(any())).thenReturn("hash");
-        var cause = new SQLException("ERROR: new row violates check constraint \"ck_users_role\"");
+        var cause = new ConstraintViolationException("check violation", new SQLException("check"), "ck_users_role");
         var violation = new DataIntegrityViolationException("could not execute statement", cause);
         when(userRepository.saveAndFlush(any(User.class))).thenThrow(violation);
 
