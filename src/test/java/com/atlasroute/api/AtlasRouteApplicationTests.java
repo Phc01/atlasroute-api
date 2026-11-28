@@ -2,10 +2,7 @@ package com.atlasroute.api;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
-import org.testcontainers.containers.PostgreSQLContainer;
-import org.testcontainers.junit.jupiter.Container;
-import org.testcontainers.junit.jupiter.Testcontainers;
+import org.springframework.context.annotation.Import;
 
 /**
  * Sobe a aplicação inteira contra um PostgreSQL real (Testcontainers) e
@@ -13,12 +10,8 @@ import org.testcontainers.junit.jupiter.Testcontainers;
  * Precisa do Docker rodando.
  */
 @SpringBootTest
-@Testcontainers
+@Import(TestcontainersConfiguration.class)
 class AtlasRouteApplicationTests {
-
-    @Container
-    @ServiceConnection
-    static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:17-alpine");
 
     @Test
     void shouldLoadContextAndRunMigrations() {
