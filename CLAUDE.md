@@ -18,7 +18,10 @@ Repositório: https://github.com/Phc01/atlasroute-api
 
 ## Ambiente (Windows)
 
-- Comandos sempre via wrapper: `.\mvnw.cmd spring-boot:run`, `.\mvnw.cmd test`
+- Comandos sempre via wrapper: `.\mvnw.cmd spring-boot:run "-Dspring-boot.run.profiles=dev"`,
+  `.\mvnw.cmd test`
+- Sem o perfil `dev`, a aplicação exige `JWT_SECRET` (mínimo 32 bytes) e não sobe sem ele; os testes
+  usam o segredo de `src/test/resources/config/application.yml`
 - Antes de rodar a aplicação: `docker compose up -d` (Docker Desktop precisa estar aberto)
 - `mvnw.cmd` é um wrapper simplificado escrito à mão (baixa o Maven 3.9.11 em
   `%USERPROFILE%\.m2\wrapper`). Na etapa 7 trocar pelo oficial com `.\mvnw.cmd wrapper:wrapper`
@@ -101,8 +104,8 @@ Repositório: https://github.com/Phc01/atlasroute-api
   (`LoginService`, `error/UnauthorizedException` → 401 genérico, BCrypt contra hash fictício
   quando o e-mail não existe), JWT HS256 com Nimbus (`spring-security-oauth2-jose`):
   `config/JwtConfig` (beans `JwtEncoder`/`JwtDecoder`, validade e emissor pelo `Clock`) e
-  `auth/JwtService`. Config em `atlasroute.security.jwt.*`; segredo em `JWT_SECRET` (padrão só
-  para dev, com aviso no log). 40 testes passando. Próximo passo: tarefa 5 (`feature/security-config`),
+  `auth/JwtService`. Config em `atlasroute.security.jwt.*`; segredo em `JWT_SECRET` (obrigatório;
+  o perfil `dev` traz um segredo de dev). 46 testes passando. Próximo passo: tarefa 5 (`feature/security-config`),
   que deve reaproveitar o bean `JwtDecoder` no resource server.
 - `@WebMvcTest` sempre com `controllers = ...`: sem filtro o slice carrega todos os controllers.
 - `UserRepository.findByEmail`/`existsByEmail` normalizam o e-mail na consulta (`lower(trim())`),
@@ -119,6 +122,11 @@ Repositório: https://github.com/Phc01/atlasroute-api
   tratar essas exceções (403/401) antes do catch-all.
 - Tarefa 5: com o starter de security, os `@WebMvcTest` de POST passam a receber 403 por CSRF;
   desligar CSRF na API stateless e deixar `/api/v1/auth/**` pública.
+- Tarefa 5: o `JwtGrantedAuthoritiesConverter` padrão lê `scope`; configurar um
+  `JwtAuthenticationConverter` com `setAuthoritiesClaimName("role")` e `setAuthorityPrefix("ROLE_")`
+  para o `hasRole(...)` funcionar.
+- Tarefa 5 ou depois: login sem limite de tentativas (força bruta); adicionar rate limit por IP/e-mail.
+- Lembrete: o token carrega `role` e vale 1h; um usuário rebaixado continua com o perfil antigo até `exp`.
 - Para 404 de recurso, os services lançam `ResourceNotFoundException("Veículo", id)`.
 
 ## Orquestração de agentes com o Orca ("bots")

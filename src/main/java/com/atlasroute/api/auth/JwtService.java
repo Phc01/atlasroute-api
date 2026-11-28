@@ -12,6 +12,7 @@ import org.springframework.security.oauth2.jwt.JwtException;
 import org.springframework.stereotype.Service;
 
 import java.time.Clock;
+import java.time.Duration;
 import java.time.Instant;
 
 /**
@@ -38,8 +39,13 @@ public class JwtService {
         this.clock = clock;
     }
 
-    /** Token gerado e o instante em que ele expira. */
-    public record AccessToken(String value, Instant expiresAt) {
+    /** Token gerado, com os instantes de emissão e de expiração. */
+    public record AccessToken(String value, Instant issuedAt, Instant expiresAt) {
+
+        /** Validade em segundos, calculada com o mesmo instante usado no token. */
+        public long expiresInSeconds() {
+            return Duration.between(issuedAt, expiresAt).toSeconds();
+        }
     }
 
     public AccessToken issue(User user) {
@@ -57,7 +63,7 @@ public class JwtService {
         JwsHeader header = JwsHeader.with(MacAlgorithm.HS256).build();
 
         String value = encoder.encode(JwtEncoderParameters.from(header, claims)).getTokenValue();
-        return new AccessToken(value, expiresAt);
+        return new AccessToken(value, now, expiresAt);
     }
 
     /**

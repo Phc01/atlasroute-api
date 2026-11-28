@@ -187,6 +187,22 @@ class AuthControllerTest {
     }
 
     @Test
+    void shouldReturn400WhenLoginPasswordExceeds72Bytes() throws Exception {
+        // Arrange
+        var body = """
+                {"email": "pedro@atlasroute.com", "password": "%s"}
+                """.formatted("a".repeat(10_000));
+
+        // Act
+        var result = mockMvc.perform(post(LOGIN).contentType(MediaType.APPLICATION_JSON).content(body));
+
+        // Assert
+        result.andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errors[0].field").value("password"));
+        verifyNoInteractions(loginService);
+    }
+
+    @Test
     void shouldReturn400WhenLoginFieldsAreMissing() throws Exception {
         // Arrange
         var body = """

@@ -4,11 +4,17 @@ import com.atlasroute.api.config.JwtConfig;
 import com.atlasroute.api.user.Role;
 import com.atlasroute.api.user.User;
 import org.junit.jupiter.api.Test;
+import org.springframework.security.oauth2.jose.jws.MacAlgorithm;
+import org.springframework.security.oauth2.jwt.JwsHeader;
+import org.springframework.security.oauth2.jwt.JwtClaimsSet;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
+import org.springframework.security.oauth2.jwt.JwtEncoderParameters;
 import org.springframework.security.oauth2.jwt.JwtException;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import java.nio.charset.StandardCharsets;
 import java.time.Clock;
+import java.util.Base64;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.ZoneOffset;
@@ -86,6 +92,35 @@ class JwtServiceTest {
 
         // Act + Assert
         assertThatThrownBy(() -> serviceAt(NOW, PROPERTIES).validate(token)).isInstanceOf(JwtException.class);
+    }
+
+    @Test
+    void shouldRejectUnsignedTokenWithAlgNone() {
+        // Arrange: cabeçalho {"alg":"none"} e o payload de um token legítimo, sem assinatura
+        var service = serviceAt(NOW, PROPERTIES);
+        var payload = service.issue(user(1L, Role.ADMIN)).value().split("\\.")[1];
+        var header = Base64.getUrlEncoder().withoutPadding()
+                .encodeToString("{\"alg\":\"none\"}".getBytes(StandardCharsets.UTF_8));
+        var unsigned = header + "." + payload + ".";
+
+        // Act + Assert
+        assertThatThrownBy(() -> service.validate(unsigned)).isInstanceOf(JwtException.class);
+    }
+
+    @Test
+    void shouldRejectTokenSignedWithAnotherAlgorithm() {
+        // Arrange: mesma chave, mas assinado com HS512 (o decoder só aceita HS256)
+        var longSecret = new JwtProperties("x".repeat(64), Duration.ofHours(1), "atlasroute-api");
+        var key = config.jwtSecretKey(longSecret);
+        var claims = JwtClaimsSet.builder().issuer("atlasroute-api").subject("1")
+                .issuedAt(NOW).expiresAt(NOW.plus(Duration.ofHours(1))).build();
+        var hs512 = config.jwtEncoder(key)
+                .encode(JwtEncoderParameters.from(JwsHeader.with(MacAlgorithm.HS512).build(), claims))
+                .getTokenValue();
+        var decoder = config.jwtDecoder(key, longSecret, Clock.fixed(NOW, ZoneOffset.UTC));
+
+        // Act + Assert
+        assertThatThrownBy(() -> decoder.decode(hs512)).isInstanceOf(JwtException.class);
     }
 
     @Test

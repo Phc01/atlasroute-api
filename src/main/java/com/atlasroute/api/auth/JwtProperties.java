@@ -17,7 +17,7 @@ import java.time.Duration;
 @Validated
 @ConfigurationProperties("atlasroute.security.jwt")
 public record JwtProperties(
-        @NotBlank String secret,
+        @NotBlank(message = "defina JWT_SECRET (mínimo 32 bytes) ou rode com o perfil dev") String secret,
         @NotNull Duration expiration,
         @NotBlank String issuer
 ) {

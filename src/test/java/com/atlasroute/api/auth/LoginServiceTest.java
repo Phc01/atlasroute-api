@@ -11,10 +11,8 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
-import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
-import java.time.ZoneOffset;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -44,7 +42,7 @@ class LoginServiceTest {
     @BeforeEach
     void setUp() {
         when(passwordEncoder.encode(any())).thenReturn(DUMMY_HASH);
-        loginService = new LoginService(userRepository, passwordEncoder, jwtService, Clock.fixed(NOW, ZoneOffset.UTC));
+        loginService = new LoginService(userRepository, passwordEncoder, jwtService);
     }
 
     @Test
@@ -53,7 +51,7 @@ class LoginServiceTest {
         var user = new User("Pedro", "pedro@atlasroute.com", "hash-real", Role.DRIVER, NOW);
         when(userRepository.findByEmail("pedro@atlasroute.com")).thenReturn(Optional.of(user));
         when(passwordEncoder.matches("senha-forte-123", "hash-real")).thenReturn(true);
-        when(jwtService.issue(user)).thenReturn(new JwtService.AccessToken("jwt.token.aqui", NOW.plus(Duration.ofHours(1))));
+        when(jwtService.issue(user)).thenReturn(new JwtService.AccessToken("jwt.token.aqui", NOW, NOW.plus(Duration.ofHours(1))));
 
         // Act
         var response = loginService.login(new LoginRequest(" Pedro@AtlasRoute.com ", "senha-forte-123"));

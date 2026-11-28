@@ -1,0 +1,5 @@
+# Só para os testes. Fica em config/ para complementar (e não substituir) o application.yml principal.
+atlasroute:
+  security:
+    jwt:
+      secret: atlasroute-test-secret-somente-para-testes-0123456789

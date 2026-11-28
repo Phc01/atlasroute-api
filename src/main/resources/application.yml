@@ -28,9 +28,10 @@ springdoc:
 atlasroute:
   security:
     jwt:
-      # Em produção, sempre defina JWT_SECRET (mínimo 32 bytes). O valor padrão é só para dev/test
-      # e a aplicação avisa no log quando ele está em uso.
-      secret: ${JWT_SECRET:atlasroute-dev-secret-NAO-USAR-EM-PRODUCAO-2026}
+      # Obrigatório: sem JWT_SECRET (mínimo 32 bytes) a aplicação não sobe.
+      # Gere um com: openssl rand -base64 48
+      # Para rodar localmente, use o perfil dev (application-dev.yml), que traz um segredo de dev.
+      secret: ${JWT_SECRET:}
       expiration: ${JWT_EXPIRATION:1h}
       issuer: atlasroute-api
 

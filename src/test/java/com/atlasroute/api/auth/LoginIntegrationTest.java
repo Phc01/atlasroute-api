@@ -55,7 +55,7 @@ class LoginIntegrationTest {
     void shouldLoginAndReturnValidTokenForTheUser() throws Exception {
         // Arrange
         var body = """
-                {"email": "PEDRO@atlasroute.com", "password": "senha-forte-123"}
+                {"email": "  PEDRO@AtlasRoute.com ", "password": "senha-forte-123"}
                 """;
 
         // Act
