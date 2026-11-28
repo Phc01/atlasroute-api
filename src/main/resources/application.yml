@@ -25,6 +25,15 @@ springdoc:
   api-docs:
     path: /v3/api-docs
 
+atlasroute:
+  security:
+    jwt:
+      # Em produção, sempre defina JWT_SECRET (mínimo 32 bytes). O valor padrão é só para dev/test
+      # e a aplicação avisa no log quando ele está em uso.
+      secret: ${JWT_SECRET:atlasroute-dev-secret-NAO-USAR-EM-PRODUCAO-2026}
+      expiration: ${JWT_EXPIRATION:1h}
+      issuer: atlasroute-api
+
 management:
   endpoints:
     web:

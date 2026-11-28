@@ -17,9 +17,11 @@ import org.springframework.web.bind.annotation.RestController;
 public class AuthController {
 
     private final RegistrationService registrationService;
+    private final LoginService loginService;
 
-    public AuthController(RegistrationService registrationService) {
+    public AuthController(RegistrationService registrationService, LoginService loginService) {
         this.registrationService = registrationService;
+        this.loginService = loginService;
     }
 
     @PostMapping("/register")
@@ -30,5 +32,14 @@ public class AuthController {
     @ApiResponse(responseCode = "409", description = "E-mail já cadastrado")
     public UserResponse register(@Valid @RequestBody RegisterRequest request) {
         return registrationService.register(request);
+    }
+
+    @PostMapping("/login")
+    @Operation(summary = "Autentica com e-mail e senha e devolve um JWT")
+    @ApiResponse(responseCode = "200", description = "Login feito; use o accessToken como Bearer")
+    @ApiResponse(responseCode = "400", description = "Campos obrigatórios ausentes")
+    @ApiResponse(responseCode = "401", description = "E-mail ou senha inválidos")
+    public LoginResponse login(@Valid @RequestBody LoginRequest request) {
+        return loginService.login(request);
     }
 }
