@@ -1,5 +1,6 @@
 package com.atlasroute.api.auth;
 
+import com.atlasroute.api.user.UserResponse;
 import com.atlasroute.api.error.ConflictException;
 import com.atlasroute.api.user.Role;
 import com.atlasroute.api.user.User;

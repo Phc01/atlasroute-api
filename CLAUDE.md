@@ -98,16 +98,25 @@ Repositório: https://github.com/Phc01/atlasroute-api
 - Tarefa 2 (issue #4, PR #5) concluída: migration `V2__create_users.sql`, `user/User`, `Role`,
   `UserRepository`; testes de banco usam `TestcontainersConfiguration` (`@Import`).
 - Tarefa 3 (issue #6, PR #10) concluída: `POST /api/v1/auth/register` (`auth/AuthController`,
-  `RegistrationService`), BCrypt via `spring-security-crypto` (`config/PasswordConfig`),
-  `error/ConflictException` → 409, senha limitada a 72 bytes (`validation/MaxUtf8Bytes`).
-- Tarefa 4 (issue #7, `feature/auth-jwt-login`) em andamento: `POST /api/v1/auth/login`
-  (`LoginService`, `error/UnauthorizedException` → 401 genérico, BCrypt contra hash fictício
-  quando o e-mail não existe), JWT HS256 com Nimbus (`spring-security-oauth2-jose`):
-  `config/JwtConfig` (beans `JwtEncoder`/`JwtDecoder`, validade e emissor pelo `Clock`) e
-  `auth/JwtService`. Config em `atlasroute.security.jwt.*`; segredo em `JWT_SECRET` (obrigatório;
-  o perfil `dev` traz um segredo de dev). 46 testes passando. Próximo passo: tarefa 5 (`feature/security-config`),
-  que deve reaproveitar o bean `JwtDecoder` no resource server.
+  `RegistrationService`), BCrypt (`config/PasswordConfig`), `error/ConflictException` → 409,
+  senha limitada a 72 bytes (`validation/MaxUtf8Bytes`).
+- Tarefa 4 (issue #7, PR #11) concluída: `POST /api/v1/auth/login` (`LoginService`,
+  `error/UnauthorizedException` → 401 genérico, BCrypt contra hash fictício quando o e-mail não
+  existe), JWT HS256 com Nimbus: `config/JwtConfig` (beans `JwtEncoder`/`JwtDecoder`) e
+  `auth/JwtService`. Config em `atlasroute.security.jwt.*`; segredo em `JWT_SECRET`.
+- Tarefa 5 (issue #8, `feature/security-config`) em andamento: `security/SecurityConfig`
+  (stateless, sem CSRF/form/basic; públicas: `/api/v1/auth/**`, `/api/v1/status`,
+  `/actuator/health`, Swagger; resto autenticado; `@EnableMethodSecurity`; claim `role` →
+  `ROLE_*`), `security/ProblemDetailSecurityHandler` (401/403 do filtro em ProblemDetail),
+  `GlobalExceptionHandler` trata `AccessDeniedException`/`AuthenticationException` antes do
+  catch-all, Swagger com esquema `bearerAuth` ("Authorize"). Rotas protegidas novas:
+  `GET /api/v1/users/me` e `GET /api/v1/users` (ADMIN, paginado, sempre por id; `UserResponse`
+  mudou para o pacote `user`). 56 testes passando. Próximo passo: tarefa 6 (`test/auth-integration`).
 - `@WebMvcTest` sempre com `controllers = ...`: sem filtro o slice carrega todos os controllers.
+- Testes de controller usam `@AutoConfigureMockMvc(addFilters = false)`; as regras de acesso
+  ficam no `SecurityConfigTest` (filtro real + tokens reais do `JwtService`).
+- Não há cadastro de ADMIN pela API (todo cadastro é DRIVER): para ter um ADMIN, alterar
+  `users.role` no banco.
 - `UserRepository.findByEmail`/`existsByEmail` normalizam o e-mail na consulta (`lower(trim())`),
   então o service passa o e-mail como foi digitado; o banco rejeita e-mail não normalizado
   (`ck_users_email_normalized`).
@@ -117,15 +126,10 @@ Repositório: https://github.com/Phc01/atlasroute-api
 - ✅ Tarefa 3: corrida no cadastro (violação de `uk_users_email` → 409) e normalização do e-mail
   (`@Email` no DTO + `User.normalizeEmail` no service) resolvidas no `RegistrationService`.
 - ✅ Tarefa 4: o login chama `User.normalizeEmail` antes de `findByEmail`.
-- Tarefa 5: o `@ExceptionHandler(Exception.class)` do `GlobalExceptionHandler` captura
-  `AccessDeniedException`/`AuthenticationException` de `@PreAuthorize` e devolveria 500;
-  tratar essas exceções (403/401) antes do catch-all.
-- Tarefa 5: com o starter de security, os `@WebMvcTest` de POST passam a receber 403 por CSRF;
-  desligar CSRF na API stateless e deixar `/api/v1/auth/**` pública.
-- Tarefa 5: o `JwtGrantedAuthoritiesConverter` padrão lê `scope`; configurar um
-  `JwtAuthenticationConverter` com `setAuthoritiesClaimName("role")` e `setAuthorityPrefix("ROLE_")`
-  para o `hasRole(...)` funcionar.
-- Tarefa 5 ou depois: login sem limite de tentativas (força bruta); adicionar rate limit por IP/e-mail.
+- ✅ Tarefa 5: `AccessDeniedException`/`AuthenticationException` tratadas antes do catch-all
+  (403/401, não 500); CSRF desligado (API stateless); `JwtAuthenticationConverter` lê o claim
+  `role` com prefixo `ROLE_`.
+- Depois da etapa 2: login sem limite de tentativas (força bruta); adicionar rate limit por IP/e-mail.
 - Lembrete: o token carrega `role` e vale 1h; um usuário rebaixado continua com o perfil antigo até `exp`.
 - Para 404 de recurso, os services lançam `ResourceNotFoundException("Veículo", id)`.
 
