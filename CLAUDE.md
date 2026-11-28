@@ -92,23 +92,27 @@ Repositório: https://github.com/Phc01/atlasroute-api
 - Etapa 1 concluída e na `main`.
 - Tarefa 0 (issue #1, PR #2) concluída.
 - Tarefa 1 (PR #3) concluída: `error/GlobalExceptionHandler` + `ResourceNotFoundException`.
-- Tarefa 2 (issue #4, `feature/user-entity`) em andamento: migration `V2__create_users.sql`,
-  `user/User`, `Role`, `UserRepository`; testes de banco usam `TestcontainersConfiguration`
-  (`@Import`). 15 testes passando. Próximo passo: tarefa 3 (`feature/auth-register`).
+- Tarefa 2 (issue #4, PR #5) concluída: migration `V2__create_users.sql`, `user/User`, `Role`,
+  `UserRepository`; testes de banco usam `TestcontainersConfiguration` (`@Import`).
+- Tarefa 3 (issue #6, `feature/auth-register`) em andamento: `POST /api/v1/auth/register`
+  (`auth/AuthController`, `RegistrationService`, `RegisterRequest`, `UserResponse`), BCrypt via
+  `spring-security-crypto` (`config/PasswordConfig`; o starter de security só entra na tarefa 5),
+  `error/ConflictException` → 409, senha limitada a 72 bytes (`validation/MaxUtf8Bytes`). 26 testes passando. Próximo passo: tarefa 4 (`feature/auth-jwt-login`).
+- `@WebMvcTest` sempre com `controllers = ...`: sem filtro o slice carrega todos os controllers.
 - `UserRepository.findByEmail`/`existsByEmail` normalizam o e-mail na consulta (`lower(trim())`),
   então o service passa o e-mail como foi digitado; o banco rejeita e-mail não normalizado
   (`ck_users_email_normalized`).
 
 ## Pendências apontadas na revisão (agente "Revisão de pull request")
 
-- Tarefa 3: `existsByEmail` + `save` tem corrida; tratar a violação de `uk_users_email`
-  (`DataIntegrityViolationException`) como 409 "E-mail já cadastrado", não 500.
-- Tarefa 3: o `trim()` do JPQL no PostgreSQL só tira espaços, e `User.normalizeEmail` tira também
-  tab/quebra de linha. Validar o e-mail com `@Email` no DTO e chamar `User.normalizeEmail` no
-  service antes do repository; `findByEmail(null)` devolve vazio (não lança exceção).
+- ✅ Tarefa 3: corrida no cadastro (violação de `uk_users_email` → 409) e normalização do e-mail
+  (`@Email` no DTO + `User.normalizeEmail` no service) resolvidas no `RegistrationService`.
+- Tarefa 4 (login): chamar `User.normalizeEmail` antes de `findByEmail`, como no cadastro.
 - Tarefa 5: o `@ExceptionHandler(Exception.class)` do `GlobalExceptionHandler` captura
   `AccessDeniedException`/`AuthenticationException` de `@PreAuthorize` e devolveria 500;
   tratar essas exceções (403/401) antes do catch-all.
+- Tarefa 5: com o starter de security, os `@WebMvcTest` de POST passam a receber 403 por CSRF;
+  desligar CSRF na API stateless e deixar `/api/v1/auth/**` pública.
 - Para 404 de recurso, os services lançam `ResourceNotFoundException("Veículo", id)`.
 
 ## Orquestração de agentes com o Orca ("bots")

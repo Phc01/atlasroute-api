@@ -100,8 +100,13 @@ class UserRepositoryTest {
         var duplicate = new User("Outro Pedro", "PEDRO@atlasroute.com", "hash", Role.DRIVER, NOW);
 
         // Act + Assert
+        // O RegistrationService reconhece a corrida de cadastro pelo nome da constraint,
+        // que o Hibernate extrai do erro do PostgreSQL.
         assertThatThrownBy(() -> userRepository.saveAndFlush(duplicate))
-                .isInstanceOf(DataIntegrityViolationException.class);
+                .isInstanceOf(DataIntegrityViolationException.class)
+                .cause()
+                .isInstanceOfSatisfying(org.hibernate.exception.ConstraintViolationException.class,
+                        violation -> assertThat(violation.getConstraintName()).isEqualToIgnoringCase("uk_users_email"));
     }
 
     @Test
