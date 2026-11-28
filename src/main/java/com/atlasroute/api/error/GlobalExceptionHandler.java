@@ -91,6 +91,14 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         return handleExceptionInternal(ex, problem, new HttpHeaders(), HttpStatus.NOT_FOUND, request);
     }
 
+    @ExceptionHandler(UnauthorizedException.class)
+    public ResponseEntity<Object> handleUnauthorized(UnauthorizedException ex, WebRequest request) {
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.UNAUTHORIZED, ex.getMessage());
+        problem.setTitle("Não autorizado");
+
+        return handleExceptionInternal(ex, problem, new HttpHeaders(), HttpStatus.UNAUTHORIZED, request);
+    }
+
     @ExceptionHandler(ConflictException.class)
     public ResponseEntity<Object> handleConflict(ConflictException ex, WebRequest request) {
         ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, ex.getMessage());

@@ -1,6 +1,7 @@
 package com.atlasroute.api.auth;
 
 import com.atlasroute.api.error.ConflictException;
+import com.atlasroute.api.error.UnauthorizedException;
 import com.atlasroute.api.user.Role;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -31,12 +32,16 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class AuthControllerTest {
 
     private static final String REGISTER = "/api/v1/auth/register";
+    private static final String LOGIN = "/api/v1/auth/login";
 
     @Autowired
     private MockMvc mockMvc;
 
     @MockitoBean
     private RegistrationService registrationService;
+
+    @MockitoBean
+    private LoginService loginService;
 
     @MockitoBean
     private Clock clock;
@@ -142,5 +147,74 @@ class AuthControllerTest {
                 .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
                 .andExpect(jsonPath("$.title").value("Conflito"))
                 .andExpect(jsonPath("$.detail").value("E-mail já cadastrado."));
+    }
+
+    @Test
+    void shouldReturn200WithBearerTokenWhenLoginSucceeds() throws Exception {
+        // Arrange
+        var body = """
+                {"email": " pedro@atlasroute.com ", "password": "senha-forte-123"}
+                """;
+        when(loginService.login(any())).thenReturn(LoginResponse.bearer("jwt.token.aqui", 3600));
+
+        // Act
+        var result = mockMvc.perform(post(LOGIN).contentType(MediaType.APPLICATION_JSON).content(body));
+
+        // Assert
+        result.andExpect(status().isOk())
+                .andExpect(jsonPath("$.accessToken").value("jwt.token.aqui"))
+                .andExpect(jsonPath("$.tokenType").value("Bearer"))
+                .andExpect(jsonPath("$.expiresIn").value(3600));
+        verify(loginService).login(new LoginRequest("pedro@atlasroute.com", "senha-forte-123"));
+    }
+
+    @Test
+    void shouldReturn401WhenCredentialsAreInvalid() throws Exception {
+        // Arrange
+        var body = """
+                {"email": "pedro@atlasroute.com", "password": "senha-errada"}
+                """;
+        when(loginService.login(any())).thenThrow(new UnauthorizedException("E-mail ou senha inválidos."));
+
+        // Act
+        var result = mockMvc.perform(post(LOGIN).contentType(MediaType.APPLICATION_JSON).content(body));
+
+        // Assert
+        result.andExpect(status().isUnauthorized())
+                .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
+                .andExpect(jsonPath("$.title").value("Não autorizado"))
+                .andExpect(jsonPath("$.detail").value("E-mail ou senha inválidos."));
+    }
+
+    @Test
+    void shouldReturn400WhenLoginPasswordExceeds72Bytes() throws Exception {
+        // Arrange
+        var body = """
+                {"email": "pedro@atlasroute.com", "password": "%s"}
+                """.formatted("a".repeat(10_000));
+
+        // Act
+        var result = mockMvc.perform(post(LOGIN).contentType(MediaType.APPLICATION_JSON).content(body));
+
+        // Assert
+        result.andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errors[0].field").value("password"));
+        verifyNoInteractions(loginService);
+    }
+
+    @Test
+    void shouldReturn400WhenLoginFieldsAreMissing() throws Exception {
+        // Arrange
+        var body = """
+                {"email": "", "password": ""}
+                """;
+
+        // Act
+        var result = mockMvc.perform(post(LOGIN).contentType(MediaType.APPLICATION_JSON).content(body));
+
+        // Assert
+        result.andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errors", hasSize(2)));
+        verifyNoInteractions(loginService);
     }
 }

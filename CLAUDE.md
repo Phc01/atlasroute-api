@@ -18,7 +18,10 @@ Repositório: https://github.com/Phc01/atlasroute-api
 
 ## Ambiente (Windows)
 
-- Comandos sempre via wrapper: `.\mvnw.cmd spring-boot:run`, `.\mvnw.cmd test`
+- Comandos sempre via wrapper: `.\mvnw.cmd spring-boot:run "-Dspring-boot.run.profiles=dev"`,
+  `.\mvnw.cmd test`
+- Sem o perfil `dev`, a aplicação exige `JWT_SECRET` (mínimo 32 bytes) e não sobe sem ele; os testes
+  usam o segredo de `src/test/resources/config/application.yml`
 - Antes de rodar a aplicação: `docker compose up -d` (Docker Desktop precisa estar aberto)
 - `mvnw.cmd` é um wrapper simplificado escrito à mão (baixa o Maven 3.9.11 em
   `%USERPROFILE%\.m2\wrapper`). Na etapa 7 trocar pelo oficial com `.\mvnw.cmd wrapper:wrapper`
@@ -94,10 +97,16 @@ Repositório: https://github.com/Phc01/atlasroute-api
 - Tarefa 1 (PR #3) concluída: `error/GlobalExceptionHandler` + `ResourceNotFoundException`.
 - Tarefa 2 (issue #4, PR #5) concluída: migration `V2__create_users.sql`, `user/User`, `Role`,
   `UserRepository`; testes de banco usam `TestcontainersConfiguration` (`@Import`).
-- Tarefa 3 (issue #6, `feature/auth-register`) em andamento: `POST /api/v1/auth/register`
-  (`auth/AuthController`, `RegistrationService`, `RegisterRequest`, `UserResponse`), BCrypt via
-  `spring-security-crypto` (`config/PasswordConfig`; o starter de security só entra na tarefa 5),
-  `error/ConflictException` → 409, senha limitada a 72 bytes (`validation/MaxUtf8Bytes`). 26 testes passando. Próximo passo: tarefa 4 (`feature/auth-jwt-login`).
+- Tarefa 3 (issue #6, PR #10) concluída: `POST /api/v1/auth/register` (`auth/AuthController`,
+  `RegistrationService`), BCrypt via `spring-security-crypto` (`config/PasswordConfig`),
+  `error/ConflictException` → 409, senha limitada a 72 bytes (`validation/MaxUtf8Bytes`).
+- Tarefa 4 (issue #7, `feature/auth-jwt-login`) em andamento: `POST /api/v1/auth/login`
+  (`LoginService`, `error/UnauthorizedException` → 401 genérico, BCrypt contra hash fictício
+  quando o e-mail não existe), JWT HS256 com Nimbus (`spring-security-oauth2-jose`):
+  `config/JwtConfig` (beans `JwtEncoder`/`JwtDecoder`, validade e emissor pelo `Clock`) e
+  `auth/JwtService`. Config em `atlasroute.security.jwt.*`; segredo em `JWT_SECRET` (obrigatório;
+  o perfil `dev` traz um segredo de dev). 46 testes passando. Próximo passo: tarefa 5 (`feature/security-config`),
+  que deve reaproveitar o bean `JwtDecoder` no resource server.
 - `@WebMvcTest` sempre com `controllers = ...`: sem filtro o slice carrega todos os controllers.
 - `UserRepository.findByEmail`/`existsByEmail` normalizam o e-mail na consulta (`lower(trim())`),
   então o service passa o e-mail como foi digitado; o banco rejeita e-mail não normalizado
@@ -107,12 +116,17 @@ Repositório: https://github.com/Phc01/atlasroute-api
 
 - ✅ Tarefa 3: corrida no cadastro (violação de `uk_users_email` → 409) e normalização do e-mail
   (`@Email` no DTO + `User.normalizeEmail` no service) resolvidas no `RegistrationService`.
-- Tarefa 4 (login): chamar `User.normalizeEmail` antes de `findByEmail`, como no cadastro.
+- ✅ Tarefa 4: o login chama `User.normalizeEmail` antes de `findByEmail`.
 - Tarefa 5: o `@ExceptionHandler(Exception.class)` do `GlobalExceptionHandler` captura
   `AccessDeniedException`/`AuthenticationException` de `@PreAuthorize` e devolveria 500;
   tratar essas exceções (403/401) antes do catch-all.
 - Tarefa 5: com o starter de security, os `@WebMvcTest` de POST passam a receber 403 por CSRF;
   desligar CSRF na API stateless e deixar `/api/v1/auth/**` pública.
+- Tarefa 5: o `JwtGrantedAuthoritiesConverter` padrão lê `scope`; configurar um
+  `JwtAuthenticationConverter` com `setAuthoritiesClaimName("role")` e `setAuthorityPrefix("ROLE_")`
+  para o `hasRole(...)` funcionar.
+- Tarefa 5 ou depois: login sem limite de tentativas (força bruta); adicionar rate limit por IP/e-mail.
+- Lembrete: o token carrega `role` e vale 1h; um usuário rebaixado continua com o perfil antigo até `exp`.
 - Para 404 de recurso, os services lançam `ResourceNotFoundException("Veículo", id)`.
 
 ## Orquestração de agentes com o Orca ("bots")

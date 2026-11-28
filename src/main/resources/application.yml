@@ -25,6 +25,16 @@ springdoc:
   api-docs:
     path: /v3/api-docs
 
+atlasroute:
+  security:
+    jwt:
+      # Obrigatório: sem JWT_SECRET (mínimo 32 bytes) a aplicação não sobe.
+      # Gere um com: openssl rand -base64 48
+      # Para rodar localmente, use o perfil dev (application-dev.yml), que traz um segredo de dev.
+      secret: ${JWT_SECRET:}
+      expiration: ${JWT_EXPIRATION:1h}
+      issuer: atlasroute-api
+
 management:
   endpoints:
     web:

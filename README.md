@@ -18,9 +18,12 @@ baixa o Maven 3.9.11 em `%USERPROFILE%\.m2\wrapper` na primeira execução.
 # 1. sobe o banco
 docker compose up -d
 
-# 2. sobe a API
-.\mvnw.cmd spring-boot:run
+# 2. sobe a API com o perfil dev (traz um segredo de JWT só para uso local)
+.\mvnw.cmd spring-boot:run "-Dspring-boot.run.profiles=dev"
 ```
+
+Fora do perfil `dev`, a variável `JWT_SECRET` é obrigatória (mínimo 32 bytes) e a API não sobe sem
+ela. Para gerar um segredo: `openssl rand -base64 48`.
 
 - Swagger: http://localhost:8080/swagger-ui.html
 - Status: http://localhost:8080/api/v1/status

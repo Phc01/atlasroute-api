@@ -1,0 +1,6 @@
+# Perfil de desenvolvimento local: .\mvnw.cmd spring-boot:run "-Dspring-boot.run.profiles=dev"
+# Nunca ative este perfil fora da sua máquina: o segredo abaixo é público no repositório.
+atlasroute:
+  security:
+    jwt:
+      secret: ${JWT_SECRET:atlasroute-dev-secret-NAO-USAR-EM-PRODUCAO-2026}
