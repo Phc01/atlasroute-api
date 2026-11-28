@@ -24,3 +24,7 @@ Thumbs.db
 
 ### Graphify (grafo gerado localmente)
 graphify-out/
+
+### Skills locais do Claude Code / Orca (não versionar)
+.claude/
+skills-lock.json

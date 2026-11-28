@@ -91,6 +91,57 @@ Repositório: https://github.com/Phc01/atlasroute-api
 
 - Etapa 1 concluída e na `main`.
 - Tarefa 0 (issue #1, PR #2) concluída.
-- Tarefa 1 (`feature/tratamento-erros`) em andamento: `error/GlobalExceptionHandler` +
-  `ResourceNotFoundException`; 7 testes passando. Próximo passo: tarefa 2 (`feature/user-entity`).
+- Tarefa 1 (PR #3) concluída: `error/GlobalExceptionHandler` + `ResourceNotFoundException`.
+- Tarefa 2 (issue #4, `feature/user-entity`) em andamento: migration `V2__create_users.sql`,
+  `user/User`, `Role`, `UserRepository`; testes de banco usam `TestcontainersConfiguration`
+  (`@Import`). 15 testes passando. Próximo passo: tarefa 3 (`feature/auth-register`).
+- `UserRepository.findByEmail`/`existsByEmail` normalizam o e-mail na consulta (`lower(trim())`),
+  então o service passa o e-mail como foi digitado; o banco rejeita e-mail não normalizado
+  (`ck_users_email_normalized`).
+
+## Pendências apontadas na revisão (agente "Revisão de pull request")
+
+- Tarefa 3: `existsByEmail` + `save` tem corrida; tratar a violação de `uk_users_email`
+  (`DataIntegrityViolationException`) como 409 "E-mail já cadastrado", não 500.
+- Tarefa 3: o `trim()` do JPQL no PostgreSQL só tira espaços, e `User.normalizeEmail` tira também
+  tab/quebra de linha. Validar o e-mail com `@Email` no DTO e chamar `User.normalizeEmail` no
+  service antes do repository; `findByEmail(null)` devolve vazio (não lança exceção).
+- Tarefa 5: o `@ExceptionHandler(Exception.class)` do `GlobalExceptionHandler` captura
+  `AccessDeniedException`/`AuthenticationException` de `@PreAuthorize` e devolveria 500;
+  tratar essas exceções (403/401) antes do catch-all.
 - Para 404 de recurso, os services lançam `ResourceNotFoundException("Veículo", id)`.
+
+## Orquestração de agentes com o Orca ("bots")
+
+O Claude Code pode atuar como **orquestrador**: outros agentes rodam no Orca, cada um no seu
+worktree e terminal, e são controlados pelo **Orca CLI** (sempre com `--json`, lendo a saída
+antes do próximo passo). Só usar quando o Pedro pedir para criar ou usar bots.
+
+### Antes de começar
+- Conferir o CLI: `orca status --json` (rodar num terminal aberto dentro do Orca)
+- Listar worktrees existentes: `orca worktree ps --json` e pegar o `repoId` do atlasroute-api
+
+### Criar um bot (um worktree por tarefa/issue)
+1. `orca worktree create --repo id:<repoId> --name <nome-da-branch> --issue <numero> --json`
+   (o nome segue os prefixos do fluxo: `feature/`, `fix/`, `chore/`, `test/`)
+2. Iniciar o agente: `orca terminal create --worktree path:<caminho-do-worktree> --command "claude" --json`
+3. Esperar ficar pronto: `orca terminal wait --for tui-idle --timeout-ms 30000 --json`
+
+### Conversar com um bot
+- Mandar a tarefa: `orca terminal send --text "<instrução completa>" --enter --json`
+- Esperar terminar: `orca terminal wait --for tui-idle --timeout-ms 600000 --json`
+- Ler a resposta: `orca terminal read --json`
+- Ver os terminais/bots: `orca terminal list --json`
+- Registrar status: `orca worktree set --worktree active --comment "<resumo>" --json`
+
+### Regras para os bots
+- Uma tarefa pequena por bot, em worktree separado, para não editarem os mesmos arquivos.
+- Ao delegar, passar: objetivo, arquivos envolvidos, que siga as convenções deste CLAUDE.md e
+  como testar (`.\mvnw.cmd test`; Docker Desktop aberto por causa do Testcontainers).
+- Os bots **não** fazem commit, push nem PR: o Pedro roda os comandos git para praticar (ver
+  "Fluxo de versionamento"). Ao terminar, o bot só sugere a mensagem de commit e o texto do PR.
+- Depois que o bot terminar: revisar o diff (`orca file open-changed --mode both`) e rodar os
+  testes antes de considerar a tarefa pronta.
+- Se um bot travar ou errar duas vezes seguidas, parar e avisar o Pedro em vez de insistir.
+- Nunca apagar worktrees (`orca worktree rm`) sem o Pedro pedir.
+- No fim, resumir: qual bot fez o quê, resultado dos testes e o que ficou pendente.
