@@ -1,7 +1,4 @@
-package com.atlasroute.api.auth;
-
-import com.atlasroute.api.user.Role;
-import com.atlasroute.api.user.User;
+package com.atlasroute.api.user;
 
 /** Dados públicos do usuário. Nunca inclui a senha nem o hash. */
 public record UserResponse(Long id, String name, String email, Role role) {

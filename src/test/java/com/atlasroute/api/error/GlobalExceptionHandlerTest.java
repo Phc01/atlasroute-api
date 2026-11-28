@@ -6,6 +6,7 @@ import jakarta.validation.constraints.Positive;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
@@ -33,6 +34,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 // controllers = só o de teste: sem isso o slice carrega todos os controllers da aplicação
 // (e exigiria mockar as dependências de cada um).
+// Filtros de segurança desligados: aqui se testa o controller; as regras de acesso ficam no SecurityConfigTest.
+@AutoConfigureMockMvc(addFilters = false)
 @WebMvcTest(controllers = GlobalExceptionHandlerTest.ErrorTestController.class)
 @Import(GlobalExceptionHandlerTest.ErrorTestController.class)
 class GlobalExceptionHandlerTest {

@@ -8,6 +8,9 @@ import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.AuthenticationException;
+import com.atlasroute.api.security.ProblemDetailSecurityHandler;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -97,6 +100,30 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         problem.setTitle("Não autorizado");
 
         return handleExceptionInternal(ex, problem, new HttpHeaders(), HttpStatus.UNAUTHORIZED, request);
+    }
+
+    /**
+     * {@code @PreAuthorize} negado dentro do controller. Sem este handler, o catch-all de
+     * {@link Exception} transformaria o 403 em 500.
+     */
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<Object> handleAccessDenied(AccessDeniedException ex, WebRequest request) {
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.FORBIDDEN, ProblemDetailSecurityHandler.FORBIDDEN);
+        problem.setTitle("Acesso negado");
+
+        return handleExceptionInternal(ex, problem, new HttpHeaders(), HttpStatus.FORBIDDEN, request);
+    }
+
+    /** Falha de autenticação lançada dentro do controller/service (mesmo motivo do handler acima). */
+    @ExceptionHandler(AuthenticationException.class)
+    public ResponseEntity<Object> handleAuthentication(AuthenticationException ex, WebRequest request) {
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(
+                HttpStatus.UNAUTHORIZED, ProblemDetailSecurityHandler.UNAUTHENTICATED);
+        problem.setTitle("Não autorizado");
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.set(HttpHeaders.WWW_AUTHENTICATE, "Bearer");
+        return handleExceptionInternal(ex, problem, headers, HttpStatus.UNAUTHORIZED, request);
     }
 
     @ExceptionHandler(ConflictException.class)

@@ -1,5 +1,6 @@
 package com.atlasroute.api.auth;
 
+import com.atlasroute.api.user.UserResponse;
 import com.atlasroute.api.error.ConflictException;
 import com.atlasroute.api.error.UnauthorizedException;
 import com.atlasroute.api.user.Role;
@@ -7,6 +8,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
@@ -28,6 +30,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+// Filtros de segurança desligados: aqui se testa o controller; as regras de acesso ficam no SecurityConfigTest.
+@AutoConfigureMockMvc(addFilters = false)
 @WebMvcTest(AuthController.class)
 class AuthControllerTest {
 
