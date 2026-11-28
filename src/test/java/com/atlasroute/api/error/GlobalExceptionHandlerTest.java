@@ -31,7 +31,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@WebMvcTest
+// controllers = só o de teste: sem isso o slice carrega todos os controllers da aplicação
+// (e exigiria mockar as dependências de cada um).
+@WebMvcTest(controllers = GlobalExceptionHandlerTest.ErrorTestController.class)
 @Import(GlobalExceptionHandlerTest.ErrorTestController.class)
 class GlobalExceptionHandlerTest {
 

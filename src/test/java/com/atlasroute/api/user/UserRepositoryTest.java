@@ -100,8 +100,11 @@ class UserRepositoryTest {
         var duplicate = new User("Outro Pedro", "PEDRO@atlasroute.com", "hash", Role.DRIVER, NOW);
 
         // Act + Assert
+        // O RegistrationService reconhece a corrida de cadastro pelo nome da constraint.
         assertThatThrownBy(() -> userRepository.saveAndFlush(duplicate))
-                .isInstanceOf(DataIntegrityViolationException.class);
+                .isInstanceOf(DataIntegrityViolationException.class)
+                .satisfies(ex -> assertThat(((DataIntegrityViolationException) ex).getMostSpecificCause().getMessage())
+                        .contains("uk_users_email"));
     }
 
     @Test
