@@ -95,8 +95,9 @@ Repositório: https://github.com/Phc01/atlasroute-api
 - Tarefa 2 (issue #4, `feature/user-entity`) em andamento: migration `V2__create_users.sql`,
   `user/User`, `Role`, `UserRepository`; testes de banco usam `TestcontainersConfiguration`
   (`@Import`). 15 testes passando. Próximo passo: tarefa 3 (`feature/auth-register`).
-- Nos services, buscar usuário com `findByEmailIgnoringFormat`/`existsByEmailIgnoringFormat`
-  (normalizam o e-mail); o banco rejeita e-mail não normalizado (`ck_users_email_normalized`).
+- `UserRepository.findByEmail`/`existsByEmail` normalizam o e-mail na consulta (`lower(trim())`),
+  então o service passa o e-mail como foi digitado; o banco rejeita e-mail não normalizado
+  (`ck_users_email_normalized`).
 
 ## Pendências apontadas na revisão (agente "Revisão de pull request")
 

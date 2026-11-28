@@ -67,19 +67,18 @@ class UserRepositoryTest {
     }
 
     @Test
-    void shouldFindByEmailIgnoringFormatWhileExactSearchDoesNot() {
+    void shouldFindByEmailIgnoringCaseAndSurroundingSpaces() {
         // Arrange
         userRepository.saveAndFlush(new User("Pedro", "pedro@atlasroute.com", "hash", Role.ADMIN, NOW));
         var typedEmail = " PEDRO@AtlasRoute.com ";
 
         // Act
-        var exact = userRepository.findByEmail(typedEmail);
-        var ignoringFormat = userRepository.findByEmailIgnoringFormat(typedEmail);
+        var found = userRepository.findByEmail(typedEmail);
+        var exists = userRepository.existsByEmail(typedEmail);
 
         // Assert
-        assertThat(exact).isEmpty();
-        assertThat(ignoringFormat).isPresent();
-        assertThat(userRepository.existsByEmailIgnoringFormat(typedEmail)).isTrue();
+        assertThat(found).isPresent();
+        assertThat(exists).isTrue();
     }
 
     @Test
@@ -88,7 +87,7 @@ class UserRepositoryTest {
         var email = "ninguem@atlasroute.com";
 
         // Act
-        var exists = userRepository.existsByEmailIgnoringFormat(email);
+        var exists = userRepository.existsByEmail(email);
 
         // Assert
         assertThat(exists).isFalse();
